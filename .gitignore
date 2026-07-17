@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+.env
+.env.*
+!.env.example
+DerivedData/
+.expo/
+*.xcuserstate
+*.xcuserdata/
+outputs/raw/private/
+models/
+

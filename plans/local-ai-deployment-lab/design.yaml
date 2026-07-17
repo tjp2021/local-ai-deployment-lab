@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "plan_id": "local-ai-deployment-lab",
+  "title": "Build a cross-device local AI deployment reliability lab",
+  "owner": "Tim",
+  "project_root": "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab",
+  "risk": {
+    "tier": 2,
+    "triggers": [
+      "multi_component_system",
+      "physical_device_integration",
+      "persistent_evidence",
+      "external_sdk_dependencies",
+      "material_reliability_claims"
+    ],
+    "rationale": "The build integrates multiple third-party AI runtimes with physical iOS and Android devices, persists raw model output and performance evidence, and may support public reliability claims. It uses synthetic data, has no production deployment or autonomous external action, and grants no authority to model output."
+  },
+  "lifecycle": {
+    "state": "VALIDATED",
+    "scope_fingerprint": "293392b9795823f97e2742f56854b33ad5ba98d1134e8497787ce28da52319e5",
+    "validated_at": "2026-07-17T22:35:58.330068+00:00"
+  },
+  "scope": {
+    "in": [
+      "Versioned runtime-neutral case and result contracts for one synthetic privacy-sensitive incident workflow.",
+      "A deterministic routing boundary that proves restricted cases make zero cloud-client calls.",
+      "QVAC and ExecuTorch adapters running on verified physical consumer devices.",
+      "Bounded structured-output, offline, latency, cancellation, and recovery evidence.",
+      "A public-ready case study and two-minute demo gated by explicit review."
+    ],
+    "out": [
+      "A universal runtime leaderboard or enterprise-readiness certification.",
+      "Model training, fine-tuning, compiler optimization, or custom hardware backends.",
+      "Real customer, financial, health, personal, or regulated data.",
+      "Battery, sustained thermal, multimodal, delegated-inference, and fleet testing in version one.",
+      "Public repository creation, publication, outreach, or employer submission without Tim's separate approval."
+    ],
+    "implementation_paths": [
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/contracts",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/runner",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/adapters/qvac",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/adapters/executorch",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/sample-data",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/outputs",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/docs",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/plans/local-ai-deployment-lab"
+    ],
+    "dependencies": [
+      "QVAC public SDK and model registry",
+      "ExecuTorch public iOS and Android packages plus documented model artifacts",
+      "Apple Xcode device tooling",
+      "Android platform tools after the Android inventory gate",
+      "Physical devices controlled by Tim"
+    ],
+    "data": [
+      "Synthetic incident case manifests with expected structured fields and routing behavior.",
+      "Raw model outputs and normalized pass/failure records.",
+      "Non-identifying device model, OS, runtime, backend, model artifact, timing, and lifecycle metadata.",
+      "Public source links and upstream issue or contribution references."
+    ],
+    "trust_boundaries": [
+      "Untrusted probabilistic model output crosses into deterministic schema validation and routing policy.",
+      "Runtime-specific native results cross into a versioned normalized JSON evidence contract.",
+      "Physical-device output crosses into a local repository that must scrub device and signing identifiers before publication.",
+      "External model and package downloads enter local build environments but may not introduce executable artifacts into source control without provenance."
+    ],
+    "external_interfaces": [
+      "QVAC SDK and public model registry during explicit setup and model download.",
+      "ExecuTorch package distribution and model artifact sources during explicit setup.",
+      "Xcode and future Android platform tools for physical-device installation and observation.",
+      "GitHub only after a separate publication decision; no issue, pull request, or repository is created by this plan."
+    ],
+    "authorities": [
+      "Model output is advisory and cannot authorize cloud routing, publication, external communication, or destructive action.",
+      "The version-one cloud client is an injected spy or local stub and performs no network request.",
+      "Tim must approve the exact public repository, case study, video, upstream contribution, and employer use before any external action."
+    ]
+  },
+  "implementation": {
+    "sequence": [
+      "Resolve device inventory and model/runtime comparability facts.",
+      "Implement and test the versioned case schema, result schema, deterministic router, and cloud-client spy without a model.",
+      "Implement the QVAC adapter against a current supported SDK and capture one physical-device baseline.",
+      "Implement the ExecuTorch adapter through documented packages and capture a comparable physical-device baseline.",
+      "Run the bounded cross-device matrix and preserve immutable raw evidence.",
+      "Perform adversarial claim review, scrub private artifacts, and prepare but do not publish the case study and demo."
+    ],
+    "reversal": "The new lab is isolated in a standalone repository and does not modify the archived QVAC evidence. Every implementation stage is a small commit. Reverting or deleting the unpushed local repository restores the prior workspace state; device apps can be uninstalled without changing device data outside their sandbox.",
+    "commit_boundaries": [
+      "Commit 1: validated design and reference-implementation source packet only.",
+      "Commit 2: case/result contracts, deterministic routing boundary, synthetic fixtures, and unit tests.",
+      "Commit 3: QVAC adapter and one raw physical-device evidence fixture.",
+      "Commit 4: ExecuTorch adapter and one raw physical-device evidence fixture.",
+      "Commit 5: cross-device analysis, limitations, scrub checks, and demo materials after evidence review."
+    ]
+  },
+  "verification": {
+    "commands": [
+      "npm run test:contracts-and-policy",
+      "npm run validate:fixtures",
+      "npm run validate:results",
+      "npm run check:scrub",
+      "python3 $YNG_ROOT/os/_infra/cos/planning_guardrail.py validate plans/local-ai-deployment-lab"
+    ],
+    "exit_criteria": [
+      "All synthetic fixtures and raw result records validate against versioned schemas.",
+      "Restricted and hostile model-output tests record zero cloud-client calls.",
+      "QVAC and ExecuTorch each produce reproducible normalized evidence on at least one verified physical device, or a documented capability failure is preserved.",
+      "The report distinguishes model, artifact, prompt, runtime, backend, device, and application control boundaries.",
+      "At least one constrained-device result changes a concrete deployment recommendation.",
+      "A fresh setup path reproduces the bounded test without private paths, identifiers, credentials, or manual source edits.",
+      "Every public claim links to raw evidence and passes adversarial review before Tim is asked to approve publication."
+    ],
+    "evidence": [
+      "Planning-guardrail validation and scope fingerprint.",
+      "Unit-test output for schemas and deterministic routing.",
+      "Raw versioned device result JSON for every reported run.",
+      "A claim-to-evidence table and scrub report.",
+      "An adversarial review record documenting rejected or narrowed claims."
+    ]
+  },
+  "approval": null,
+  "override": null
+}

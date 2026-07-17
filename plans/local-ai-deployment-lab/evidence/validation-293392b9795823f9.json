@@ -1,0 +1,10 @@
+{
+  "actor_id": "Codex",
+  "evidence_id": "validation-293392b9795823f9",
+  "plan_id": "local-ai-deployment-lab",
+  "result": "valid",
+  "schema_version": 1,
+  "scope_fingerprint": "293392b9795823f97e2742f56854b33ad5ba98d1134e8497787ce28da52319e5",
+  "timestamp": "2026-07-17T22:35:58.330068+00:00",
+  "type": "plan.validation"
+}
