@@ -12,10 +12,14 @@ const resultSchema = JSON.parse(
 const modelOutputSchema = JSON.parse(
   await readFile(new URL("../contracts/model-output.schema.json", import.meta.url), "utf8"),
 );
+const nativeGenerationSchema = JSON.parse(
+  await readFile(new URL("../contracts/native-generation.schema.json", import.meta.url), "utf8"),
+);
 
 const validateCaseRecord = ajv.compile(caseSchema);
 const validateResultRecord = ajv.compile(resultSchema);
 const validateModelOutputRecord = ajv.compile(modelOutputSchema);
+const validateNativeGenerationRecord = ajv.compile(nativeGenerationSchema);
 
 export interface ValidationResult {
   valid: boolean;
@@ -47,4 +51,8 @@ export function validateResult(value: unknown): ValidationResult {
 
 export function validateModelOutput(value: unknown): ValidationResult {
   return runValidator(validateModelOutputRecord, value);
+}
+
+export function validateNativeGeneration(value: unknown): ValidationResult {
+  return runValidator(validateNativeGenerationRecord, value);
 }

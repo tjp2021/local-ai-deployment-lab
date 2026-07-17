@@ -17,6 +17,9 @@ Public evidence:
 | QVAC profiler | https://docs.qvac.tether.io/runtime/profiler/ | QVAC already exposes runtime timing. The lab should consume existing measurements rather than reinventing a profiler. |
 | ExecuTorch backends | https://docs.pytorch.org/executorch/stable/backends-section.html | Edge artifacts and acceleration differ by device backend; portable source models do not imply one identical deployable artifact. |
 | ExecuTorch iOS LLM runtime | https://docs.pytorch.org/executorch/stable/llm/run-on-ios.html | ExecuTorch exposes load, generation, token streaming, cancellation, and multimodal runtime behavior suitable for a comparison adapter. |
+| ExecuTorch LLM export | https://docs.pytorch.org/executorch/stable/llm/export-llm.html | The supported export path includes Llama 3.2 and records quantization and sequence/cache choices that must be treated as deployment inputs. |
+| ExecuTorch custom LLM backends | https://docs.pytorch.org/executorch/stable/llm/export-custom-llm.html | Backend lowering produces target-specific PTE files; iOS and Android artifacts must be identified separately rather than presented as one portable binary. |
+| ExecuTorch 1.3.1 release | https://github.com/pytorch/executorch/releases/tag/v1.3.1 | Version pin for the first native adapter implementation. |
 | Apple model availability guidance | https://developer.apple.com/documentation/FoundationModels/generating-content-and-performing-tasks-with-foundation-models | Apple requires applications to check device/model availability and provide fallback behavior. |
 | ONNX Runtime mobile guidance | https://onnxruntime.ai/docs/tutorials/mobile/ | Mobile qualification should include binary/model size, latency, power, and device-specific acceleration behavior. |
 
@@ -67,4 +70,3 @@ A narrow cross-device deployment lab is appropriate because it demonstrates qual
 - Measure every hardware backend or modality.
 - Use real customer, payment, health, or personal data.
 - Publish device identifiers, signing material, local paths, or private logs.
-

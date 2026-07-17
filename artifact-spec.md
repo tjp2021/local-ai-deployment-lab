@@ -17,7 +17,8 @@ Required model output:
   "severity": "low|medium|high|critical",
   "missingInformation": ["field"],
   "recommendedAction": "bounded next action",
-  "requiresHumanReview": true
+  "requiresHumanReview": true,
+  "suggestedProcessing": "local|cloud|human_review"
 }
 ```
 
@@ -81,4 +82,3 @@ MLX Swift is a gated third adapter. It is added only if QVAC and ExecuTorch are 
 - Report sample counts and repeated-run variance.
 - Use `not measured` instead of inferred values.
 - Use `component result`, `supported`, `constrained`, or `not supported`; never use a universal winner or certification badge.
-

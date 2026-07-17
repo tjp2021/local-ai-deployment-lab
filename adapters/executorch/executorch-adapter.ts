@@ -1,12 +1,3 @@
-import {
-  cancel as qvacCancel,
-  completion as qvacCompletion,
-  loadModel as qvacLoadModel,
-  unloadModel as qvacUnloadModel,
-  type CompletionFinal,
-  type CompletionRun,
-} from "@qvac/sdk";
-import * as qvacSdk from "@qvac/sdk";
 import modelOutputSchema from "../../contracts/model-output.schema.json" with { type: "json" };
 import type { IncidentCase, ModelIncidentOutput } from "../../contracts/types.js";
 import type {
@@ -16,73 +7,55 @@ import type {
 } from "../../runner/adapter.js";
 import { evaluateModelOutput } from "../../runner/evaluation.js";
 import { routeIncident, SpyCloudClient } from "../../runner/policy.js";
-import { buildIncidentPrompt, PROMPT_TEMPLATE } from "../../runner/prompt.js";
-import { validateModelOutput } from "../../runner/validation.js";
+import { flattenIncidentPrompt, PROMPT_TEMPLATE } from "../../runner/prompt.js";
+import { validateModelOutput, validateNativeGeneration } from "../../runner/validation.js";
 
 const ADAPTER_VERSION = "0.1.0";
-const RUNTIME_VERSION = "0.15.0";
-const LLAMA_3_2_1B_INST_Q4_0 = (
-  qvacSdk as unknown as Record<string, unknown>
-).LLAMA_3_2_1B_INST_Q4_0;
+const RUNTIME_VERSION = "1.3.1";
 
-if (typeof LLAMA_3_2_1B_INST_Q4_0 !== "object" || LLAMA_3_2_1B_INST_Q4_0 === null) {
-  throw new Error("QVAC SDK 0.15.0 did not expose the expected Llama 3.2 1B model descriptor.");
+export interface ExecuTorchArtifact {
+  family: string;
+  quantization: string | null;
+  backend: string;
+  artifactId: string;
+  artifactSha256: string;
+  tokenizerId: string;
 }
 
-interface QvacClient {
-  loadModel(options: { modelSrc: unknown }): Promise<string>;
-  completion(params: {
-    modelId: string;
-    history: Array<{ role: "system" | "user"; content: string }>;
-    stream: true;
-    generationParams: Record<string, string | number | boolean>;
-    responseFormat: {
-      type: "json_schema";
-      json_schema: {
-        name: string;
-        strict: true;
-        schema: object;
-      };
-    };
-  }): CompletionRun;
-  cancel(params: { requestId: string }): Promise<void>;
-  unloadModel(params: { modelId: string }): Promise<void>;
-}
-
-const realClient: QvacClient = {
-  loadModel: (options) => qvacLoadModel(options as never),
-  completion: (params) => qvacCompletion(params as never),
-  cancel: qvacCancel,
-  unloadModel: qvacUnloadModel,
-};
-
-function buildPrompt(incidentCase: IncidentCase): Array<{ role: "system" | "user"; content: string }> {
-  const prompt = buildIncidentPrompt(incidentCase);
-  return [
-    {
-      role: "system",
-      content: prompt.system,
-    },
-    {
-      role: "user",
-      content: prompt.user,
-    },
-  ];
-}
-
-function parseOutput(final: CompletionFinal): {
+export interface ExecuTorchGeneration {
+  schemaVersion: "1.0";
+  requestId: string;
   rawOutput: string;
+  timeToFirstTokenMs: number | null;
+  completionMs: number | null;
+  promptTokens: number | null;
+  generatedTokens: number | null;
+  tokensPerSecond: number | null;
+}
+
+export interface ExecuTorchBridge {
+  load(artifact: ExecuTorchArtifact): Promise<{ backend: string | null }>;
+  generate(input: {
+    prompt: string;
+    outputSchema: object;
+    temperature: number;
+    maxNewTokens: number;
+    sequenceLength: number;
+  }): Promise<ExecuTorchGeneration>;
+  cancel(requestId: string): Promise<void>;
+  unload(): Promise<void>;
+}
+
+function parseOutput(rawOutput: string): {
   parsedOutput: ModelIncidentOutput | null;
   parseError: string | null;
   schemaValid: boolean;
   schemaErrors: string[];
 } {
-  const rawOutput = final.contentText.trim();
   try {
-    const candidate = JSON.parse(rawOutput) as unknown;
+    const candidate = JSON.parse(rawOutput.trim()) as unknown;
     const validation = validateModelOutput(candidate);
     return {
-      rawOutput,
       parsedOutput: validation.valid ? candidate as ModelIncidentOutput : null,
       parseError: validation.valid ? null : `Schema validation failed: ${validation.errors.join("; ")}`,
       schemaValid: validation.valid,
@@ -90,7 +63,6 @@ function parseOutput(final: CompletionFinal): {
     };
   } catch (error) {
     return {
-      rawOutput,
       parsedOutput: null,
       parseError: error instanceof Error ? error.message : String(error),
       schemaValid: false,
@@ -99,75 +71,78 @@ function parseOutput(final: CompletionFinal): {
   }
 }
 
-export class QvacAdapter implements RuntimeAdapter {
-  private modelId: string | null = null;
+export class ExecuTorchAdapter implements RuntimeAdapter {
+  private loaded = false;
   private loadMs: number | null = null;
+  private observedBackend: string | null = null;
   private currentLoadClass: RunContext["loadClass"] = "unknown";
 
-  constructor(private readonly client: QvacClient = realClient) {}
+  constructor(
+    private readonly bridge: ExecuTorchBridge,
+    private readonly artifact: ExecuTorchArtifact,
+  ) {}
 
   capabilities(): AdapterCapabilities {
     return {
-      runtime: "qvac",
+      runtime: "executorch",
       runtimeVersion: RUNTIME_VERSION,
-      structuredOutput: true,
+      structuredOutput: false,
       cancellation: true,
       nativeStats: [
         "timeToFirstToken",
-        "tokensPerSecond",
+        "completionTime",
         "promptTokens",
         "generatedTokens",
-        "backendDevice",
+        "tokensPerSecond",
       ],
       knownLimitations: [
-        "The QVAC GGUF artifact is not byte-identical to an ExecuTorch PTE artifact.",
-        "Independent schema validation remains required after native json_schema generation.",
+        "ExecuTorch TextLLMRunner generation is not a native JSON Schema constraint.",
+        "Backend-specific PTE files are distinct deployable artifacts.",
+        "The QVAC GGUF and ExecuTorch PTE artifacts are not byte-identical.",
       ],
     };
   }
 
   async load(loadClass: RunContext["loadClass"] = "unknown"): Promise<void> {
-    if (this.modelId !== null) return;
+    if (this.loaded) return;
     this.currentLoadClass = loadClass;
     const started = performance.now();
-    this.modelId = await this.client.loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0 });
+    const metadata = await this.bridge.load(this.artifact);
     this.loadMs = Math.round(performance.now() - started);
+    this.observedBackend = metadata.backend;
+    this.loaded = true;
   }
 
   async generate(incidentCase: IncidentCase, context: RunContext): Promise<unknown> {
-    if (this.modelId === null) {
-      throw new Error("QVAC adapter must load a model before generation.");
+    if (!this.loaded) {
+      throw new Error("ExecuTorch adapter must load a model before generation.");
     }
 
-    const started = performance.now();
-    const run = this.client.completion({
-      modelId: this.modelId,
-      history: buildPrompt(incidentCase),
-      stream: true,
-      generationParams: {
-        temp: 0,
-        seed: 42,
-        predict: 256,
-      },
-      responseFormat: {
-        type: "json_schema",
-        json_schema: {
-          name: "incident_output",
-          strict: true,
-          schema: modelOutputSchema,
-        },
-      },
-    });
-
-    let final: CompletionFinal;
+    let generation: ExecuTorchGeneration;
     try {
-      final = await run.final;
+      generation = await this.bridge.generate({
+        prompt: flattenIncidentPrompt(incidentCase),
+        outputSchema: modelOutputSchema,
+        temperature: 0,
+        maxNewTokens: 256,
+        sequenceLength: 2048,
+      });
     } catch (error) {
       return this.errorResult(incidentCase, context, "generation", error);
     }
 
-    const completionMs = Math.round(performance.now() - started);
-    const parsed = parseOutput(final);
+    const bridgeValidation = validateNativeGeneration(generation);
+    if (!bridgeValidation.valid) {
+      return this.errorResult(
+        incidentCase,
+        context,
+        "validation",
+        new Error(`Native bridge result failed validation: ${bridgeValidation.errors.join("; ")}`),
+        typeof generation.rawOutput === "string" ? generation.rawOutput : "",
+      );
+    }
+
+    const parsed = parseOutput(generation.rawOutput);
     const checks = parsed.parsedOutput
       ? evaluateModelOutput(incidentCase, parsed.parsedOutput)
       : [{
@@ -181,7 +156,6 @@ export class QvacAdapter implements RuntimeAdapter {
       modelOutput: parsed.parsedOutput,
       cloudClient: cloud,
     });
-    const stats = final.stats;
 
     return {
       schemaVersion: "1.0",
@@ -189,26 +163,25 @@ export class QvacAdapter implements RuntimeAdapter {
       caseId: incidentCase.id,
       testedAt: context.testedAt,
       runtime: {
-        name: "qvac",
+        name: "executorch",
         version: RUNTIME_VERSION,
         adapterVersion: ADAPTER_VERSION,
         model: {
-          family: "Llama 3.2 1B Instruct",
-          artifactFormat: "GGUF",
-          quantization: "Q4_0",
+          family: this.artifact.family,
+          artifactFormat: "PTE",
+          quantization: this.artifact.quantization,
           promptTemplate: PROMPT_TEMPLATE,
           generationParameters: {
             temperature: 0,
-            seed: 42,
-            predict: 256,
-            responseFormat: "json_schema",
+            maxNewTokens: 256,
+            sequenceLength: 2048,
+            artifactId: this.artifact.artifactId,
+            artifactSha256: this.artifact.artifactSha256,
+            tokenizerId: this.artifact.tokenizerId,
           },
         },
       },
-      device: {
-        ...context.device,
-        backend: stats?.backendDevice ?? null,
-      },
+      device: { ...context.device, backend: this.observedBackend },
       network: context.network,
       lifecycle: {
         loadClass: context.loadClass ?? this.currentLoadClass,
@@ -216,14 +189,14 @@ export class QvacAdapter implements RuntimeAdapter {
         unloadSucceeded: null,
       },
       generation: {
-        rawOutput: parsed.rawOutput,
+        rawOutput: generation.rawOutput,
         parsedOutput: parsed.parsedOutput,
         parseError: parsed.parseError,
-        timeToFirstTokenMs: stats?.timeToFirstToken ?? null,
-        completionMs,
-        promptTokens: stats?.promptTokens ?? null,
-        generatedTokens: stats?.generatedTokens ?? null,
-        tokensPerSecond: stats?.tokensPerSecond ?? null,
+        timeToFirstTokenMs: generation.timeToFirstTokenMs,
+        completionMs: generation.completionMs,
+        promptTokens: generation.promptTokens,
+        generatedTokens: generation.generatedTokens,
+        tokensPerSecond: generation.tokensPerSecond,
       },
       evaluation: {
         schemaValid: parsed.schemaValid,
@@ -237,15 +210,14 @@ export class QvacAdapter implements RuntimeAdapter {
   }
 
   async cancel(requestId: string): Promise<void> {
-    await this.client.cancel({ requestId });
+    await this.bridge.cancel(requestId);
   }
 
   async unload(): Promise<boolean> {
-    if (this.modelId === null) return true;
-    const modelId = this.modelId;
-    this.modelId = null;
+    if (!this.loaded) return true;
+    this.loaded = false;
     try {
-      await this.client.unloadModel({ modelId });
+      await this.bridge.unload();
       return true;
     } catch {
       return false;
@@ -255,8 +227,9 @@ export class QvacAdapter implements RuntimeAdapter {
   private errorResult(
     incidentCase: IncidentCase,
     context: RunContext,
-    category: "generation" | "unknown",
+    category: "generation" | "validation" | "unknown",
     error: unknown,
+    rawOutput = "",
   ): unknown {
     return {
       schemaVersion: "1.0",
@@ -264,18 +237,25 @@ export class QvacAdapter implements RuntimeAdapter {
       caseId: incidentCase.id,
       testedAt: context.testedAt,
       runtime: {
-        name: "qvac",
+        name: "executorch",
         version: RUNTIME_VERSION,
         adapterVersion: ADAPTER_VERSION,
         model: {
-          family: "Llama 3.2 1B Instruct",
-          artifactFormat: "GGUF",
-          quantization: "Q4_0",
+          family: this.artifact.family,
+          artifactFormat: "PTE",
+          quantization: this.artifact.quantization,
           promptTemplate: PROMPT_TEMPLATE,
-          generationParameters: { temperature: 0, seed: 42, predict: 256 },
+          generationParameters: {
+            temperature: 0,
+            maxNewTokens: 256,
+            sequenceLength: 2048,
+            artifactId: this.artifact.artifactId,
+            artifactSha256: this.artifact.artifactSha256,
+            tokenizerId: this.artifact.tokenizerId,
+          },
         },
       },
-      device: { ...context.device, backend: null },
+      device: { ...context.device, backend: this.observedBackend },
       network: context.network,
       lifecycle: {
         loadClass: context.loadClass,
@@ -283,7 +263,7 @@ export class QvacAdapter implements RuntimeAdapter {
         unloadSucceeded: null,
       },
       generation: {
-        rawOutput: "",
+        rawOutput,
         parsedOutput: null,
         parseError: null,
         timeToFirstTokenMs: null,
@@ -292,11 +272,7 @@ export class QvacAdapter implements RuntimeAdapter {
         generatedTokens: null,
         tokensPerSecond: null,
       },
-      evaluation: {
-        schemaValid: false,
-        passed: false,
-        checks: [],
-      },
+      evaluation: { schemaValid: false, passed: false, checks: [] },
       policy: {
         classification: incidentCase.classification,
         allowedRoute: "human_review",

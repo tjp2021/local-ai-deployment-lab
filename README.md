@@ -1,6 +1,6 @@
 # Local AI Deployment Lab
 
-Status: approved reference implementation; design phase; private until publication review.
+Status: approved reference implementation; contract and adapter phase; private until publication review.
 
 ## Purpose
 
@@ -33,5 +33,4 @@ Can a privacy-sensitive incident-intake workflow produce valid structured result
 
 ## Current next action
 
-Resolve the physical-device inventory, validate and seal the Tier 2 design, then implement the runtime-neutral case and result contracts. No runtime integration begins before the design passes the workspace planning guardrail.
-
+Build the versioned native ExecuTorch bridge against the documented 1.3.1 package path, then run one bounded physical-device acceptance sequence per adapter. The Mac must first regain enough free space for native dependencies and model artifacts. Android inventory remains unverified until platform tools and the physical device are available.

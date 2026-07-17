@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { validateCase, validateModelOutput, validateResult } from "../runner/validation.js";
+import {
+  validateCase,
+  validateModelOutput,
+  validateNativeGeneration,
+  validateResult,
+} from "../runner/validation.js";
 
 const cases = JSON.parse(
   await readFile(new URL("../sample-data/incidents.json", import.meta.url), "utf8"),
@@ -48,6 +53,32 @@ test("model-output contract rejects plausible JSON with an unauthorized field", 
   });
   assert.equal(result.valid, false);
   assert.match(result.errors.join(" "), /additional properties/i);
+});
+
+test("native-generation boundary rejects missing or invented metrics", () => {
+  const valid = validateNativeGeneration({
+    schemaVersion: "1.0",
+    requestId: "fixture-request",
+    rawOutput: "{}",
+    timeToFirstTokenMs: null,
+    completionMs: 100,
+    promptTokens: null,
+    generatedTokens: 2,
+    tokensPerSecond: 20,
+  });
+  assert.equal(valid.valid, true, valid.errors.join("; "));
+
+  const invalid = validateNativeGeneration({
+    schemaVersion: "1.0",
+    requestId: "fixture-request",
+    rawOutput: "{}",
+    completionMs: 100,
+    generatedTokens: 2,
+    tokensPerSecond: 20,
+    inferredPeakMemoryMb: 999,
+  });
+  assert.equal(invalid.valid, false);
+  assert.match(invalid.errors.join(" "), /required|additional properties/i);
 });
 
 test("result contract accepts explicit unknown measurements instead of invented values", () => {

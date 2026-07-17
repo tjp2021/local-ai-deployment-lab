@@ -18,7 +18,7 @@
   "lifecycle": {
     "state": "VALIDATED",
     "scope_fingerprint": "293392b9795823f97e2742f56854b33ad5ba98d1134e8497787ce28da52319e5",
-    "validated_at": "2026-07-17T22:35:58.330068+00:00"
+    "validated_at": "2026-07-17T22:59:44.407523+00:00"
   },
   "scope": {
     "in": [
@@ -89,8 +89,9 @@
     "commit_boundaries": [
       "Commit 1: validated design and reference-implementation source packet only.",
       "Commit 2: case/result contracts, deterministic routing boundary, synthetic fixtures, and unit tests.",
-      "Commit 3: QVAC adapter and one raw physical-device evidence fixture.",
-      "Commit 4: ExecuTorch adapter and one raw physical-device evidence fixture.",
+      "Commit 3: QVAC harness adapter and contract tests.",
+      "Commit 4: ExecuTorch harness adapter, native-generation contract, and contract tests.",
+      "Later bounded commits: each native platform bridge and its raw physical-device evidence after storage and device gates pass.",
       "Commit 5: cross-device analysis, limitations, scrub checks, and demo materials after evidence review."
     ]
   },

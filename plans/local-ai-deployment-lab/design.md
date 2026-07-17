@@ -117,12 +117,11 @@ These questions block individual device or upstream claims, not the contract-fir
 
 1. Validate and seal this design plus the reference-implementation source packet.
 2. Commit contracts, synthetic cases, deterministic routing, and unit tests.
-3. Commit the current QVAC adapter and one preserved physical-device run.
-4. Commit the ExecuTorch adapter and one preserved physical-device run.
+3. Commit the current QVAC harness adapter and its contract tests; commit physical evidence separately after storage and device gates pass.
+4. Commit the ExecuTorch harness adapter and native-generation contract; commit each native platform bridge and physical run separately after it builds cleanly.
 5. Run the cross-device matrix, record analysis and rejected claims, and prepare scrubbed demo materials.
 6. Ask Tim to review the exact publication package before any external action.
 
 ## Exit criteria
 
 The project is complete when two runtime adapters produce reproducible normalized evidence or honest capability failures on verified physical devices; restricted cases mechanically produce zero cloud calls; the analysis distinguishes every material model/runtime/device/application confound; at least one constrained-device result changes a deployment recommendation; setup works without private state; all public claims link to raw evidence; and Tim has reviewed the exact public package.
-

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local-ai-deployment-lab.example/schemas/native-generation-1.0.json",
+  "title": "Native Runtime Generation Boundary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "rawOutput",
+    "timeToFirstTokenMs",
+    "completionMs",
+    "promptTokens",
+    "generatedTokens",
+    "tokensPerSecond"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "rawOutput": { "type": "string" },
+    "timeToFirstTokenMs": { "type": ["number", "null"], "minimum": 0 },
+    "completionMs": { "type": ["number", "null"], "minimum": 0 },
+    "promptTokens": { "type": ["integer", "null"], "minimum": 0 },
+    "generatedTokens": { "type": ["integer", "null"], "minimum": 0 },
+    "tokensPerSecond": { "type": ["number", "null"], "minimum": 0 }
+  }
+}
