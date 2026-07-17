@@ -11,10 +11,10 @@
     "noEmit": true
   },
   "include": [
+    "adapters/**/*.ts",
     "contracts/**/*.ts",
     "runner/**/*.ts",
     "scripts/**/*.ts",
     "test/**/*.ts"
   ]
 }
-
