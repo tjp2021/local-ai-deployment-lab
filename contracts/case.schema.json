@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local-ai-deployment-lab.example/schemas/case-1.0.json",
+  "title": "Local AI Deployment Lab Case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "classification",
+    "incidentText",
+    "expected",
+    "tags"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "classification": {
+      "enum": ["restricted", "non_restricted"]
+    },
+    "incidentText": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 2000
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "severity",
+        "requiresHumanReview",
+        "suggestedProcessing",
+        "requiredMissingInformation"
+      ],
+      "properties": {
+        "category": {
+          "enum": ["delivery", "account", "fraud", "technical", "unknown"]
+        },
+        "severity": {
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "requiresHumanReview": {
+          "type": "boolean"
+        },
+        "suggestedProcessing": {
+          "enum": ["local", "cloud", "human_review"]
+        },
+        "requiredMissingInformation": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "straightforward",
+          "ambiguous",
+          "malformed",
+          "contradictory",
+          "prompt_injection",
+          "restricted",
+          "missing_information"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}
+

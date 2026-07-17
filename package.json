@@ -1,0 +1,26 @@
+{
+  "name": "local-ai-deployment-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cross-device local AI deployment reliability lab",
+  "scripts": {
+    "test": "npm run test:contracts-and-policy",
+    "test:contracts-and-policy": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "validate:fixtures": "node --import tsx scripts/validate-fixtures.ts",
+    "validate:results": "node --import tsx scripts/validate-results.ts",
+    "check:scrub": "node --import tsx scripts/check-scrub.ts"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.15",
+    "tsx": "4.20.3",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
