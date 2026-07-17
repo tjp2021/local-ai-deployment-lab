@@ -1,0 +1,50 @@
+name: LocalAIDeploymentLab
+options:
+  minimumXcodeGenVersion: 2.40.0
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+packages:
+  ExecuTorch:
+    url: https://github.com/pytorch/executorch.git
+    revision: a4c4949079cc4f3c98dbd770ddb84b204bb9d411
+targets:
+  LocalAIDeploymentLab:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    entitlements:
+      path: Entitlements.plist
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Local AI Lab
+        UILaunchScreen: {}
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.localai.deploymentlab
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: ExecuTorch
+        product: executorch
+      - package: ExecuTorch
+        product: executorch_llm
+      - package: ExecuTorch
+        product: backend_xnnpack
+      - package: ExecuTorch
+        product: kernels_llm
+      - package: ExecuTorch
+        product: kernels_optimized
+      - package: ExecuTorch
+        product: kernels_quantized
+      - package: ExecuTorch
+        product: kernels_torchao

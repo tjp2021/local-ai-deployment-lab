@@ -8,5 +8,10 @@ DerivedData/
 *.xcuserstate
 *.xcuserdata/
 outputs/raw/private/
-models/
-
+models/*
+!models/README.md
+platforms/ios-executorch/LocalAIDeploymentLab.xcodeproj/
+platforms/ios-executorch/Config/Local.xcconfig
+platforms/ios-executorch/.build/
+platforms/ios-executorch/.packages/
+platforms/ios-executorch/Package.resolved
