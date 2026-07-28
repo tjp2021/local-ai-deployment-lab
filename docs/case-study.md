@@ -24,7 +24,7 @@ The lab is not a benchmark. It produces bounded deployment recommendations: `sup
 
 The QVAC adapter was rebuilt from clean source against QVAC 0.15.0. Its unit tests inject a fake client, so passing tests proved the adapter normalized results correctly but proved nothing about the runtime. Before touching a phone, the adapter ran against the real SDK on a desktop host across all eighteen fixtures.
 
-**Evidence class: desktop.** These are not physical-device claims. The host has 17 GB of memory, a desktop GPU, and no thermal or battery limit. Device numbers must come from a platform runner on real hardware.
+**Evidence class: desktop.** These are not physical-device claims. The host has 17 GB of memory, a desktop GPU, and no thermal or battery limit. Device numbers appear in the next section, from a runner on real hardware.
 
 ### Results
 
@@ -53,6 +53,42 @@ Structured output was reliable. Judgment was not. Severity was wrong on 14 of 18
 
 One measurement caveat is recorded rather than hidden. The `requiredMissingInformation` check uses exact normalized string equality, and the prompt never tells the model which vocabulary to use. It therefore measures literal phrase compliance, not comprehension, and its 12 failures are not a capability finding.
 
+## What Worked: QVAC on a Physical iPhone
+
+The same eighteen fixtures then ran on an iPhone 15 Pro (iOS 26.2.1) through an Expo runner built for the purpose. QVAC ships as a JavaScript SDK inside a Bare worker, so the device runner is an Expo application rather than a Swift target. It performs no validation, evaluation, or routing. It records what the runtime produced, and the desktop applies the contract, so both evidence classes are scored by one implementation.
+
+### Correctness did not change
+
+| Measure | Desktop | iPhone 15 Pro |
+|---|---|---|
+| Schema-valid output | 18/18 | 18/18 |
+| Policy gate held | 18/18 | 18/18 |
+| Restricted cases with a cloud call | 0 of 8 | 0 of 8 |
+| Severity failures | 14 | 14 |
+| Generation errors | 0 | 0 |
+
+Every expectation check failed at exactly the same count on both. More directly: **the raw model output was byte-identical on all eighteen cases.** With temperature 0 and a fixed seed that's the expected result, but expected and demonstrated are different things, and it had never been shown across hardware in this lab.
+
+That matters for the injection case. `injection-send-to-cloud` produced the same compromised recommendation on the phone, and the router blocked it on the phone, with the same zero cloud calls. The safety property survives the move to real hardware because it never depended on the model.
+
+### Performance is where the phone differs
+
+| Measure | Desktop | iPhone 15 Pro |
+|---|---|---|
+| Mean tokens per second | 105 | 53 |
+| Mean completion | 1,238 ms | 2,257 ms |
+| Cold model load | 5,538 ms | 2,542 ms |
+
+Generation runs at roughly half desktop speed. A single incident case takes about 2.3 seconds on the phone, which is workable for an intake form and not workable for anything interactive.
+
+Cold load was faster on the phone, which is worth flagging as unexplained rather than dressed up. Storage layout and cache state differ between the two hosts and this lab did not isolate the cause.
+
+### Bounded Recommendation
+
+| Configuration | Classification | Evidence |
+|---|---|---|
+| QVAC 0.15.0 + Llama 3.2 1B Q4_0 + iPhone 15 Pro | `supported` for structured extraction, `constrained` for judgment | 18/18 schema valid, 18/18 policy gate, 53 tokens per second, severity wrong on 14/18 |
+
 ## What Did Not Work: Constraining the Output Vocabulary
 
 The obvious fix for that measurement problem was to constrain the field mechanically. `category`, `severity`, and `suggestedProcessing` were already enums, so `missingInformation` became a nineteen-value enum in model-output schema 1.1. The runtime, model, prompt template, and generation parameters were held constant so the vocabulary was the only changed variable.
@@ -79,7 +115,6 @@ Schema 1.0 remains the operating contract. The experimental schema is preserved 
 |---|---|---|
 | QVAC 0.15.0 + Llama 3.2 1B Q4_0 + desktop host, schema 1.0 | `supported` for structured extraction, `constrained` for judgment | 18/18 schema valid, 18/18 policy gate, severity wrong on 14/18 |
 | QVAC 0.15.0 + Llama 3.2 1B Q4_0 + desktop host, schema 1.1 | `not_supported` | 6/18 schema valid, truncation and duplicate-item failures |
-| QVAC 0.15.0 + iPhone 15 Pro | `not_tested` | Platform runner not yet built |
 
 ## What Did Not Work: ExecuTorch + SpinQuant INT4 on iOS
 
@@ -140,7 +175,7 @@ These signals indicate Android/ARM CPU targeting, but they don't explicitly stat
 
 ## What's Next
 
-- Build the QVAC platform runner, then run the physical-device acceptance sequence on iPhone 15 Pro and compare against the desktop baseline recorded here
+- Repeat the device sweep across battery states and after thermal load, which this run did not vary
 - Cross-device boundary classification (iPhone 15 Pro vs. iPhone 15 vs. unverified Android)
 - Find where QVAC's structured-output reliability actually breaks, by varying schema complexity between the 1.0 and 1.1 endpoints
 - Upstream contribution: document the iOS LLM runner's `"forward"` method expectation in ExecuTorch examples, or contribute a reproduction case
