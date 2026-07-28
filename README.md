@@ -28,9 +28,10 @@ Can a privacy-sensitive incident-intake workflow produce valid structured result
 - [Experiment plan](experiment-plan.md)
 - [Device inventory](device-inventory.md)
 - [Demo plan](demo-plan.md)
+- [Case study](docs/case-study.md) — narrative findings and bounded deployment recommendation
 - [Repository decision](docs/repository-decision.md)
 - [Tier 2 system design](plans/local-ai-deployment-lab/design.md)
 
 ## Current next action
 
-Build the versioned native ExecuTorch bridge against the documented 1.3.1 package path, then run one bounded physical-device acceptance sequence per adapter. The Mac must first regain enough free space for native dependencies and model artifacts. Android inventory remains unverified until platform tools and the physical device are available.
+Run the QVAC adapter physical-device acceptance sequence on iPhone 15 Pro, then classify each supported adapter/device combination. The ExecuTorch iOS path is blocked: the pre-built SpinQuant INT4 artifact fails to load on the iOS Swift LLM runner, and the exact failing stage stays unverified (see `docs/case-study.md` and `outputs/`). Android inventory remains unverified until platform tools and the physical device are available.
