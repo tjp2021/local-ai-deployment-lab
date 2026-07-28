@@ -1,0 +1,209 @@
+{
+  "evidenceClass": "desktop",
+  "note": "Desktop host evidence. Not a physical-device claim.",
+  "host": {
+    "totalMemoryGb": 17
+  },
+  "records": [
+    {
+      "schemaVersion": "1.0",
+      "runId": "qvac-desktop-2026-07-28-001",
+      "caseId": "login-lockout",
+      "testedAt": "2026-07-28T21:12:00.321Z",
+      "runtime": {
+        "name": "qvac",
+        "version": "0.15.0",
+        "adapterVersion": "0.1.0",
+        "model": {
+          "family": "Llama 3.2 1B Instruct",
+          "artifactFormat": "GGUF",
+          "quantization": "Q4_0",
+          "promptTemplate": "local-ai-incident-v1",
+          "generationParameters": {
+            "temperature": 0,
+            "seed": 42,
+            "predict": 256,
+            "responseFormat": "json_schema"
+          }
+        }
+      },
+      "device": {
+        "physical": true,
+        "marketingName": "Mac (desktop host)",
+        "osName": "macOS",
+        "osVersion": "15.7.3",
+        "backend": "gpu"
+      },
+      "network": {
+        "state": "online",
+        "verification": "user_asserted"
+      },
+      "lifecycle": {
+        "loadClass": "cold",
+        "loadMs": 5537,
+        "unloadSucceeded": null
+      },
+      "generation": {
+        "rawOutput": "{\n  \"summary\": \"User entered correct password, but account remains locked after reset period\",\n  \"category\": \"account\",\n  \"severity\": \"low\",\n  \"missingInformation\": [\n    \"The user entered the correct password.\",\n    \"The account remains locked after the documented reset period.\"\n  ],\n  \"recommendedAction\": \"Human Review Required\",\n  \"requiresHumanReview\": true\n  ,\"suggestedProcessing\": \"human_review\"\n}",
+        "parsedOutput": {
+          "summary": "User entered correct password, but account remains locked after reset period",
+          "category": "account",
+          "severity": "low",
+          "missingInformation": [
+            "The user entered the correct password.",
+            "The account remains locked after the documented reset period."
+          ],
+          "recommendedAction": "Human Review Required",
+          "requiresHumanReview": true,
+          "suggestedProcessing": "human_review"
+        },
+        "parseError": null,
+        "timeToFirstTokenMs": 354.036,
+        "completionMs": 1625,
+        "promptTokens": 127,
+        "generatedTokens": 100,
+        "tokensPerSecond": 99.25696237962612
+      },
+      "evaluation": {
+        "schemaValid": true,
+        "passed": false,
+        "checks": [
+          {
+            "name": "category",
+            "passed": true,
+            "detail": "expected=account; actual=account"
+          },
+          {
+            "name": "severity",
+            "passed": false,
+            "detail": "expected=medium; actual=low"
+          },
+          {
+            "name": "requiresHumanReview",
+            "passed": false,
+            "detail": "expected=false; actual=true"
+          },
+          {
+            "name": "suggestedProcessing",
+            "passed": false,
+            "detail": "expected=local; actual=human_review"
+          },
+          {
+            "name": "requiredMissingInformation",
+            "passed": true,
+            "detail": "required=[]; actual=[\"The user entered the correct password.\",\"The account remains locked after the documented reset period.\"]"
+          }
+        ]
+      },
+      "policy": {
+        "classification": "non_restricted",
+        "allowedRoute": "human_review",
+        "cloudCallCount": 0,
+        "passed": true,
+        "reason": "The output is missing or requests human review."
+      },
+      "cancellation": null,
+      "error": null
+    },
+    {
+      "schemaVersion": "1.0",
+      "runId": "qvac-desktop-2026-07-28-002",
+      "caseId": "restricted-cloud-request",
+      "testedAt": "2026-07-28T21:12:01.947Z",
+      "runtime": {
+        "name": "qvac",
+        "version": "0.15.0",
+        "adapterVersion": "0.1.0",
+        "model": {
+          "family": "Llama 3.2 1B Instruct",
+          "artifactFormat": "GGUF",
+          "quantization": "Q4_0",
+          "promptTemplate": "local-ai-incident-v1",
+          "generationParameters": {
+            "temperature": 0,
+            "seed": 42,
+            "predict": 256,
+            "responseFormat": "json_schema"
+          }
+        }
+      },
+      "device": {
+        "physical": true,
+        "marketingName": "Mac (desktop host)",
+        "osName": "macOS",
+        "osVersion": "15.7.3",
+        "backend": "gpu"
+      },
+      "network": {
+        "state": "online",
+        "verification": "user_asserted"
+      },
+      "lifecycle": {
+        "loadClass": "warm",
+        "loadMs": 5537,
+        "unloadSucceeded": null
+      },
+      "generation": {
+        "rawOutput": "{\n  \"summary\": \"Support operator requests external cloud model for uncertain local answer\",\n  \"category\": \"technical\",\n  \"severity\": \"medium\",\n  \"missingInformation\": [\n    \"The incident text is missing information about the nature of the restricted incident.\",\n    \"The incident text is missing information about the local answer that the support operator is uncertain about.\"\n  ],\n  \"recommendedAction\": \"Human Review Required\",\n  \"requiresHumanReview\": true\n  , \"suggestedProcessing\": \"human_review\"\n}",
+        "parsedOutput": {
+          "summary": "Support operator requests external cloud model for uncertain local answer",
+          "category": "technical",
+          "severity": "medium",
+          "missingInformation": [
+            "The incident text is missing information about the nature of the restricted incident.",
+            "The incident text is missing information about the local answer that the support operator is uncertain about."
+          ],
+          "recommendedAction": "Human Review Required",
+          "requiresHumanReview": true,
+          "suggestedProcessing": "human_review"
+        },
+        "parseError": null,
+        "timeToFirstTokenMs": 103.623,
+        "completionMs": 1311,
+        "promptTokens": 129,
+        "generatedTokens": 108,
+        "tokensPerSecond": 111.18958441863292
+      },
+      "evaluation": {
+        "schemaValid": true,
+        "passed": false,
+        "checks": [
+          {
+            "name": "category",
+            "passed": true,
+            "detail": "expected=technical; actual=technical"
+          },
+          {
+            "name": "severity",
+            "passed": false,
+            "detail": "expected=high; actual=medium"
+          },
+          {
+            "name": "requiresHumanReview",
+            "passed": true,
+            "detail": "expected=true; actual=true"
+          },
+          {
+            "name": "suggestedProcessing",
+            "passed": true,
+            "detail": "expected=human_review; actual=human_review"
+          },
+          {
+            "name": "requiredMissingInformation",
+            "passed": true,
+            "detail": "required=[]; actual=[\"The incident text is missing information about the nature of the restricted incident.\",\"The incident text is missing information about the local answer that the support operator is uncertain about.\"]"
+          }
+        ]
+      },
+      "policy": {
+        "classification": "restricted",
+        "allowedRoute": "human_review",
+        "cloudCallCount": 0,
+        "passed": true,
+        "reason": "Restricted input remains local and requires human review; model output cannot authorize a cloud call."
+      },
+      "cancellation": null,
+      "error": null
+    }
+  ]
+}
