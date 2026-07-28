@@ -19,10 +19,14 @@ import type { IncidentCase } from "../contracts/types.js";
 
 const root = new URL("../", import.meta.url).pathname;
 
-// One straightforward non-restricted case and one restricted case. The
-// restricted case is the important one: it must produce zero cloud calls
-// regardless of what the model recommends.
-const CASE_IDS = ["login-lockout", "restricted-cloud-request"];
+// Default is a two-case smoke proof: one straightforward non-restricted case
+// and one restricted case. The restricted case is the important one, since it
+// must produce zero cloud calls regardless of what the model recommends.
+//
+// Pass --all to sweep the full fixture set. Two hand-picked cases exercise the
+// contract but cannot support an accuracy claim.
+const SMOKE_CASE_IDS = ["login-lockout", "restricted-cloud-request"];
+const sweepAll = process.argv.includes("--all");
 
 function context(runId: string, loadClass: RunContext["loadClass"]): RunContext {
   return {
@@ -39,16 +43,50 @@ function context(runId: string, loadClass: RunContext["loadClass"]): RunContext 
   };
 }
 
+/**
+ * Aggregate case-level results. The lab reports case-level outcomes rather
+ * than a single composite score, so this counts what failed and where.
+ */
+function summarize(records: Array<Record<string, any>>): void {
+  const total = records.length;
+  const schemaValid = records.filter((r) => r.evaluation?.schemaValid).length;
+  const passed = records.filter((r) => r.evaluation?.passed).length;
+  const policyOk = records.filter((r) => r.policy?.passed).length;
+  const restricted = records.filter((r) => r.policy?.classification === "restricted");
+  const restrictedWithCloud = restricted.filter((r) => (r.policy?.cloudCallCount ?? 0) > 0);
+
+  const checkFailures = new Map<string, number>();
+  for (const record of records) {
+    for (const check of record.evaluation?.checks ?? []) {
+      if (!check.passed) checkFailures.set(check.name, (checkFailures.get(check.name) ?? 0) + 1);
+    }
+  }
+
+  console.log("\n===== SUMMARY =====");
+  console.log(`cases:                 ${total}`);
+  console.log(`schema valid:          ${schemaValid}/${total}`);
+  console.log(`all expectations met:  ${passed}/${total}`);
+  console.log(`policy gate held:      ${policyOk}/${total}`);
+  console.log(`restricted cases:      ${restricted.length}, with cloud calls: ${restrictedWithCloud.length}`);
+  console.log("failed checks by name:");
+  for (const [name, count] of [...checkFailures].sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${name}: ${count}`);
+  }
+}
+
 async function main(): Promise<void> {
   const cases = JSON.parse(
     await readFile(join(root, "sample-data/incidents.json"), "utf8"),
   ) as IncidentCase[];
 
-  const selected = CASE_IDS.map((id) => {
-    const found = cases.find((c) => c.id === id);
-    if (!found) throw new Error(`Fixture case not found: ${id}`);
-    return found;
-  });
+  const selected = sweepAll
+    ? cases
+    : SMOKE_CASE_IDS.map((id) => {
+        const found = cases.find((c) => c.id === id);
+        if (!found) throw new Error(`Fixture case not found: ${id}`);
+        return found;
+      });
+  console.log(`mode: ${sweepAll ? "full sweep" : "smoke"} (${selected.length} cases)`);
 
   const adapter = new QvacAdapter();
   console.log("capabilities:", JSON.stringify(adapter.capabilities(), null, 2));
@@ -67,21 +105,27 @@ async function main(): Promise<void> {
       context(runId, index === 0 ? "cold" : "warm"),
     ) as Record<string, any>;
 
-    console.log("schemaValid:", record.evaluation?.schemaValid);
-    console.log("passed:     ", record.evaluation?.passed);
-    console.log("route:      ", record.policy?.allowedRoute);
-    console.log("cloudCalls: ", record.policy?.cloudCallCount);
-    console.log("raw:        ", JSON.stringify(record.generation?.rawOutput ?? "").slice(0, 200));
-    if (record.error) console.log("ERROR:", JSON.stringify(record.error));
+    const failed = (record.evaluation?.checks ?? []).filter((c: any) => !c.passed);
+    console.log(
+      `schemaValid=${record.evaluation?.schemaValid} passed=${record.evaluation?.passed} ` +
+      `route=${record.policy?.allowedRoute} cloudCalls=${record.policy?.cloudCallCount} ` +
+      `policyOk=${record.policy?.passed}`,
+    );
+    if (failed.length > 0) {
+      console.log("  failed checks: " + failed.map((c: any) => `${c.name} (${c.detail})`).join(", "));
+    }
+    if (record.error) console.log("  ERROR:", JSON.stringify(record.error));
     records.push(record);
   }
+
+  summarize(records as Array<Record<string, any>>);
 
   const unloaded = await adapter.unload();
   console.log(`\nunload succeeded: ${unloaded}`);
 
   const outPath = join(
     root,
-    `outputs/qvac-desktop-macos-${new Date().toISOString().slice(0, 10)}-001.json`,
+    `outputs/qvac-desktop-macos-${new Date().toISOString().slice(0, 10)}-${sweepAll ? "sweep" : "001"}.json`,
   );
   await writeFile(
     outPath,
