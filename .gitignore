@@ -15,3 +15,10 @@ platforms/ios-executorch/Config/Local.xcconfig
 platforms/ios-executorch/.build/
 platforms/ios-executorch/.packages/
 platforms/ios-executorch/Package.resolved
+
+# iOS QVAC runner: build outputs, never source
+platforms/ios-qvac/generated/
+platforms/ios-qvac/qvac/
+platforms/ios-qvac/ios/
+platforms/ios-qvac/android/
+platforms/ios-qvac/.expo/

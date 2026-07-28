@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Local AI Lab QVAC",
+    "slug": "local-ai-lab-qvac",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "dev.localai.deploymentlab.qvac"
+    },
+    "plugins": [
+      "expo-build-properties",
+      "@qvac/sdk/expo-plugin"
+    ]
+  }
+}
