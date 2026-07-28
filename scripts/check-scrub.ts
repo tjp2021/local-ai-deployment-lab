@@ -1,9 +1,14 @@
+import { execFileSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative } from "node:path";
 
 const root = new URL("../", import.meta.url);
 const ignoredDirectories = new Set([".git", "node_modules", "models", "private"]);
-const textExtensions = new Set([".json", ".md", ".ts", ".js", ".yaml", ".yml", ".txt", ".xcconfig", ".pbxproj", ".plist"]);
+const textExtensions = new Set([
+  ".json", ".md", ".txt", ".yaml", ".yml",
+  ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".swift",
+  ".xcconfig", ".pbxproj", ".plist", ".sh",
+]);
 // Local.xcconfig is gitignored by design and is where a developer's own team
 // identifier belongs. Everything else must stay free of signing material.
 const ignoredFiles = new Set([
@@ -35,10 +40,39 @@ async function collect(directory: string): Promise<string[]> {
   return files;
 }
 
+/**
+ * Only files that can actually reach the published repository matter here.
+ * Generated build outputs are gitignored and routinely contain absolute local
+ * paths: the QVAC worker bundle is one. Blacklisting each build directory by
+ * name would rot, so ask git what it ignores.
+ *
+ * If git cannot answer, nothing is skipped. Over-reporting is the safe failure.
+ */
+function gitIgnored(paths: string[]): Set<string> {
+  if (paths.length === 0) return new Set();
+  try {
+    const stdout = execFileSync("git", ["check-ignore", "--stdin"], {
+      cwd: root.pathname,
+      input: paths.join("\n"),
+      encoding: "utf8",
+      maxBuffer: 1024 * 1024 * 64,
+    });
+    return new Set(stdout.split("\n").filter(Boolean));
+  } catch (error) {
+    // check-ignore exits 1 when no path is ignored, which is not an error.
+    const stdout = (error as { stdout?: string }).stdout ?? "";
+    return new Set(stdout.split("\n").filter(Boolean));
+  }
+}
+
+const collected = await collect(root.pathname);
+const relativePaths = collected.map((file) => relative(root.pathname, file));
+const ignored = gitIgnored(relativePaths);
+
 const findings: string[] = [];
-for (const file of await collect(root.pathname)) {
+for (const file of collected) {
   const localPath = relative(root.pathname, file);
-  if (ignoredFiles.has(localPath)) continue;
+  if (ignoredFiles.has(localPath) || ignored.has(localPath)) continue;
   const content = await readFile(file, "utf8");
   for (const check of forbiddenPatterns) {
     if (check.pattern.test(content)) findings.push(`${localPath}: ${check.label}`);
