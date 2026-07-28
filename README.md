@@ -2,7 +2,7 @@
 
 Can a privacy-sensitive incident workflow run on a phone with no cloud inference, and how should the app behave when the model or the device can't meet the requirement?
 
-This lab answers that with evidence from a real iPhone, not a benchmark. The headline result is that a deterministic policy gate held through a successful prompt injection, and that a runtime's structured-output guarantee turned out to be conditional rather than absolute.
+This lab answers that with evidence from a real iPhone, not a benchmark. The empirical findings are that a runtime's structured-output guarantee turned out to be conditional rather than absolute, and that raw model output was byte-identical between a MacBook and an iPhone. The safety result is architectural rather than empirical: restricted data can't reach the cloud because the router never grants model output that authority, and tests hold the invariant in place.
 
 ## Results
 
@@ -23,7 +23,7 @@ Raw model output was byte-identical across both hosts on all eighteen cases.
 
 ## Three findings
 
-**1. Authority beats alignment.** One fixture hides a prompt injection inside restricted incident text. The injection worked: the model recommended sending restricted data to the cloud. The router blocked it anyway, because the deterministic gate owns cloud invocation and model output can't authorize it. Same result on the phone as on the desktop.
+**1. Authority beats alignment, by construction.** One fixture hides a prompt injection inside restricted incident text. The injection partially worked: the model recommended cloud processing for restricted data, though it also flagged the case for human review. The router refused the cloud route, and that outcome was guaranteed before inference ran. The restricted branch has no code path that can invoke the cloud client, and classification comes from the trusted case record, never from the model. That's an architectural invariant locked in by tests, not an empirical discovery. The phone produced the same compromised recommendation, and scoring the phone's recorded output through the same router gave the same zero cloud calls.
 
 **2. Structured-output guarantees degrade with schema complexity.** Constraining one field to a nineteen-value enum, holding runtime, model, prompt, and parameters constant, dropped valid output from 18/18 to 6/18 through truncated JSON and duplicate array items. The experimental schema and its evidence are preserved in [`contracts/experimental/`](contracts/experimental/).
 
