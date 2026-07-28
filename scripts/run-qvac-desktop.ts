@@ -27,6 +27,9 @@ const root = new URL("../", import.meta.url).pathname;
 // contract but cannot support an accuracy claim.
 const SMOKE_CASE_IDS = ["login-lockout", "restricted-cloud-request"];
 const sweepAll = process.argv.includes("--all");
+// Optional output label, so a re-run under a changed contract does not
+// overwrite the evidence it should be compared against.
+const label = process.argv.find((a) => a.startsWith("--label="))?.split("=")[1];
 
 function context(runId: string, loadClass: RunContext["loadClass"]): RunContext {
   return {
@@ -125,7 +128,7 @@ async function main(): Promise<void> {
 
   const outPath = join(
     root,
-    `outputs/qvac-desktop-macos-${new Date().toISOString().slice(0, 10)}-${sweepAll ? "sweep" : "001"}.json`,
+    `outputs/qvac-desktop-macos-${new Date().toISOString().slice(0, 10)}-${label ?? (sweepAll ? "sweep" : "001")}.json`,
   );
   await writeFile(
     outPath,

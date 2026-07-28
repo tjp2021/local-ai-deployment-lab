@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local-ai-deployment-lab.example/schemas/model-output-1.1.json",
+  "title": "Local AI Deployment Lab Model Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "summary",
+    "category",
+    "severity",
+    "missingInformation",
+    "recommendedAction",
+    "requiresHumanReview",
+    "suggestedProcessing"
+  ],
+  "properties": {
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "category": {
+      "enum": ["delivery", "account", "fraud", "technical", "unknown"]
+    },
+    "severity": {
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "missingInformation": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "account reference",
+          "actual incident description",
+          "affected action",
+          "affected workflow",
+          "application version",
+          "clarification of delivery status",
+          "delivery photo",
+          "device model",
+          "error message",
+          "identity verification",
+          "incident details",
+          "operating system version",
+          "order reference",
+          "promised delivery date",
+          "separate account records",
+          "time of failure",
+          "tracking record",
+          "verified access-change timeline",
+          "verified requester"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "recommendedAction": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "requiresHumanReview": {
+      "type": "boolean"
+    },
+    "suggestedProcessing": {
+      "enum": ["local", "cloud", "human_review"]
+    }
+  }
+}
+
