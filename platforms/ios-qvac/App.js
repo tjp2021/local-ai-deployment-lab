@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import * as Device from "expo-device";
-import * as FileSystem from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import {
   completion,
   loadModel,
@@ -21,7 +21,7 @@ import inputs from "./generated/inputs.json";
  * runtimes.
  */
 
-const RESULTS_DIRECTORY = `${FileSystem.documentDirectory}Results/`;
+const RESULTS_DIRECTORY_NAME = "Results";
 
 function deviceMetadata() {
   return {
@@ -146,14 +146,26 @@ export default function App() {
         records,
       };
 
-      await FileSystem.makeDirectoryAsync(RESULTS_DIRECTORY, { intermediates: true });
-      const path = `${RESULTS_DIRECTORY}qvac-ios-${Date.now()}.json`;
-      await FileSystem.writeAsStringAsync(path, JSON.stringify(payload, null, 2));
-      log(`wrote ${path}`);
+      const serialized = JSON.stringify(payload, null, 2);
 
-      // Printed with a stable prefix so the record can be recovered from device
-      // logs when file sharing is unavailable.
+      // Emit to the device log BEFORE touching the filesystem. A completed run
+      // was lost once to a write failure, and generation is far more expensive
+      // than logging, so the cheap durable copy goes first.
       console.log(`LAB_NATIVE_RESULT=${JSON.stringify(payload)}`);
+
+      // A write failure must not discard results that already exist.
+      try {
+        const directory = new Directory(Paths.document, RESULTS_DIRECTORY_NAME);
+        if (!directory.exists) {
+          directory.create({ intermediates: true });
+        }
+        const file = new File(directory, `qvac-ios-${Date.now()}.json`);
+        file.create({ overwrite: true });
+        file.write(serialized);
+        log(`wrote ${file.uri}`);
+      } catch (error) {
+        log(`WRITE FAILED (results still in device log): ${String(error?.message ?? error)}`);
+      }
       setStatus("done");
     } catch (error) {
       log(`RUN FAILED: ${String(error?.message ?? error)}`);

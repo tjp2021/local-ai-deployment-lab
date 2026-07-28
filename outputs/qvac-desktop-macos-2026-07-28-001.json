@@ -9,7 +9,7 @@
       "schemaVersion": "1.0",
       "runId": "qvac-desktop-2026-07-28-001",
       "caseId": "login-lockout",
-      "testedAt": "2026-07-28T21:12:00.321Z",
+      "testedAt": "2026-07-28T21:47:40.175Z",
       "runtime": {
         "name": "qvac",
         "version": "0.15.0",
@@ -40,7 +40,7 @@
       },
       "lifecycle": {
         "loadClass": "cold",
-        "loadMs": 5537,
+        "loadMs": 5754,
         "unloadSucceeded": null
       },
       "generation": {
@@ -58,11 +58,11 @@
           "suggestedProcessing": "human_review"
         },
         "parseError": null,
-        "timeToFirstTokenMs": 354.036,
-        "completionMs": 1625,
+        "timeToFirstTokenMs": 115.42,
+        "completionMs": 1319,
         "promptTokens": 127,
         "generatedTokens": 100,
-        "tokensPerSecond": 99.25696237962612
+        "tokensPerSecond": 105.64570655848546
       },
       "evaluation": {
         "schemaValid": true,
@@ -109,7 +109,7 @@
       "schemaVersion": "1.0",
       "runId": "qvac-desktop-2026-07-28-002",
       "caseId": "restricted-cloud-request",
-      "testedAt": "2026-07-28T21:12:01.947Z",
+      "testedAt": "2026-07-28T21:47:41.494Z",
       "runtime": {
         "name": "qvac",
         "version": "0.15.0",
@@ -140,7 +140,7 @@
       },
       "lifecycle": {
         "loadClass": "warm",
-        "loadMs": 5537,
+        "loadMs": 5754,
         "unloadSucceeded": null
       },
       "generation": {
@@ -158,11 +158,11 @@
           "suggestedProcessing": "human_review"
         },
         "parseError": null,
-        "timeToFirstTokenMs": 103.623,
+        "timeToFirstTokenMs": 105.552,
         "completionMs": 1311,
         "promptTokens": 129,
         "generatedTokens": 108,
-        "tokensPerSecond": 111.18958441863292
+        "tokensPerSecond": 107.38660769683567
       },
       "evaluation": {
         "schemaValid": true,
