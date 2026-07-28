@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "requestId": "mps-spinquant-iphone15pro-20260728-002",
+  "rawOutput": "",
+  "timeToFirstTokenMs": null,
+  "completionMs": null,
+  "promptTokens": null,
+  "generatedTokens": null,
+  "tokensPerSecond": null,
+  "errorCategory": "runtime_load_failure",
+  "diagnosticDetail": "org.pytorch.executorch.llm.error error 32 (NotFound) during TextRunner.load() on iPhone 15 Pro (iOS 26.2.1). The iOS LLM runner calls module_->load_method(\"forward\") (extension/llm/runner/text_decoder_runner.h). A strings scan of the PTE shows the literal \"forward\" IS present in the artifact, so a missing method name is NOT confirmed — error 32 (NotFound) can also originate at backend init, memory planning, or tensor resolution. Method-table inspection tooling is not available in this environment, so the exact missing resource is unverified. The model card and ExecuTorch docs describe this artifact as Android/ARM CPU (XNNPACK + KleidiAI) targeted with no iOS claims.",
+  "device": {
+    "marketingModel": "iPhone 15 Pro",
+    "osVersion": "26.2.1",
+    "ramGb": 8
+  },
+  "runtime": {
+    "name": "ExecuTorch",
+    "sdkVersion": "1.3.1",
+    "backend": "xnnpack+mps",
+    "backendAvailable": ["xnnpack", "mps"]
+  },
+  "model": {
+    "family": "Llama 3.2",
+    "artifactFormat": "pte",
+    "quantization": "SpinQuant_INT4_EO8",
+    "sizeBytes": 1135951488,
+    "exportTarget": "android_xnnpack_kleidiai",
+    "methodNames": ["unverified"]
+  },
+  "classification": "not_supported",
+  "rationale": "The SpinQuant INT4 PTE artifact fails to load on the ExecuTorch 1.3.1 iOS Swift LLM runner with error 32 (NotFound). The model card documents Android/ARM CPU benchmarking only, with no iOS claims. The precise load stage (method lookup vs. backend init vs. memory planning) is not isolated, and method-table inspection tooling is not available in this environment. The failure is consistent with an Android-targeted export being incompatible with the iOS Swift runner path, but the exact missing resource is unverified. This is not a device capability failure — the iPhone 15 Pro has sufficient RAM and the app pipeline works.",
+  "evidence": {
+    "appLaunched": true,
+    "modelFilesVerified": true,
+    "loadAttempted": true,
+    "loadSucceeded": false,
+    "generationAttempted": false,
+    "rootCauseConfirmed": false,
+    "rootCauseSource": "Unverified. ExecuTorch source shows load_method(\"forward\") is the iOS runner entry point, but the PTE contains the string \"forward\". Error 32 stage not isolated."
+  },
+  "upstreamReference": "https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md — quantized models documented as Android/ARM CPU (XNNPACK + KleidiAI); no iOS load claims",
+  "remediation": "Re-export the Llama 3.2 1B model for iOS using ExecuTorch export_llama.py with iOS-appropriate backend targets, use the BF16 baseline documented as iOS-compatible, or isolate the exact NotFound stage with ExecuTorch method-table tooling (not available in this environment)."
+}
