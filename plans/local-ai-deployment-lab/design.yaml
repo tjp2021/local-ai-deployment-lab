@@ -17,8 +17,8 @@
   },
   "lifecycle": {
     "state": "VALIDATED",
-    "scope_fingerprint": "293392b9795823f97e2742f56854b33ad5ba98d1134e8497787ce28da52319e5",
-    "validated_at": "2026-07-17T22:59:44.407523+00:00"
+    "scope_fingerprint": "60616ce53992d0f816d4a4668f40feba0351b3fee167050cebc01fa0dd040915",
+    "validated_at": "2026-07-28T17:20:08.165489+00:00"
   },
   "scope": {
     "in": [
@@ -43,6 +43,9 @@
       "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/sample-data",
       "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/outputs",
       "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/docs",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/platforms",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/models",
+      "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/scripts",
       "os/personal/career/job-search/reference-implementations/local-ai-deployment-lab/plans/local-ai-deployment-lab"
     ],
     "dependencies": [
