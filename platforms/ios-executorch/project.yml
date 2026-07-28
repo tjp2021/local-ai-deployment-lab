@@ -25,6 +25,9 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.localai.deploymentlab
@@ -40,6 +43,8 @@ targets:
         product: executorch_llm
       - package: ExecuTorch
         product: backend_xnnpack
+      - package: ExecuTorch
+        product: backend_mps
       - package: ExecuTorch
         product: kernels_llm
       - package: ExecuTorch

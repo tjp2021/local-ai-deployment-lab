@@ -1,0 +1,12 @@
+// Signing configuration for the ExecuTorch iOS runner.
+//
+// Team identifiers and signing identities are never committed to this
+// repository. To sign for a physical device, create the file
+// Config/Local.xcconfig (gitignored) containing one line:
+//
+//   DEVELOPMENT_TEAM = <your-team-id>
+//
+// The include below is optional, so generation and CI still work without it.
+// Without a team, select one manually in Xcode's Signing & Capabilities tab.
+
+#include? "Local.xcconfig"
