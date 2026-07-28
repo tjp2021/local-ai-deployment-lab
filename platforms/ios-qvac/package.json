@@ -7,7 +7,8 @@
     "export:inputs": "cd ../.. && node --import tsx scripts/export-mobile-inputs.ts",
     "bundle:worker": "node scripts/bundle-worker.mjs",
     "prepare:run": "npm run export:inputs && npm run bundle:worker",
-    "ios": "expo run:ios --device"
+    "ios": "expo run:ios --device",
+    "postinstall": "node scripts/apply-patches.mjs"
   },
   "dependencies": {
     "@qvac/sdk": "0.15.0",
