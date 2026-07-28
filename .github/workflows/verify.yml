@@ -1,0 +1,42 @@
+name: verify
+
+# The desktop and device evidence in outputs/ cannot be regenerated in CI: one
+# needs a real QVAC model download, the other a paired iPhone. What CI can and
+# does prove is that the contracts, the deterministic policy gate, the fixtures,
+# and the publication scrub all still hold.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # npm ci honors the committed lockfile, so a run a year from now uses the
+      # same dependency versions this evidence was produced with.
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Contract and policy tests
+        run: npm run test:contracts-and-policy
+
+      - name: Validate fixtures
+        run: npm run validate:fixtures
+
+      - name: Validate committed evidence against the result contract
+        run: npm run validate:evidence
+
+      - name: Publication scrub
+        run: npm run check:scrub

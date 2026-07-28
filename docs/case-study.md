@@ -83,6 +83,14 @@ Generation runs at roughly half desktop speed. A single incident case takes abou
 
 Cold load was faster on the phone, which is worth flagging as unexplained rather than dressed up. Storage layout and cache state differ between the two hosts and this lab did not isolate the cause.
 
+### What these numbers do not cover
+
+Every device measurement came from a cool iPhone at 100% battery running eighteen short cases back to back. That's close to the best case a phone ever offers.
+
+Thermal throttling, sustained load, and low-power mode were not varied, and those are exactly the conditions that move mobile inference numbers. A phone that holds 53 tokens per second for forty seconds may not hold it for ten minutes. Anyone planning a deployment on this evidence should treat the throughput figure as an upper bound rather than a steady state, and measure sustained behavior against their own workload.
+
+The correctness results are far more portable than the performance results. Schema validity and the policy-gate guarantee are properties of the contract and the router, and neither depends on how warm the phone is.
+
 ### Bounded Recommendation
 
 | Configuration | Classification | Evidence |

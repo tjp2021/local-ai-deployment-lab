@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "validate:fixtures": "node --import tsx scripts/validate-fixtures.ts",
     "validate:results": "node --import tsx scripts/validate-results.ts",
-    "check:scrub": "node --import tsx scripts/check-scrub.ts"
+    "check:scrub": "node --import tsx scripts/check-scrub.ts",
+    "validate:evidence": "node --import tsx scripts/validate-evidence.ts"
   },
   "dependencies": {
     "@qvac/sdk": "0.15.0",
