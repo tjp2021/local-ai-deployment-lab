@@ -2,7 +2,7 @@ schema_version: 1
 id: local-ai-deployment-lab
 kind: project
 name: Local AI Deployment Lab
-status: active
+status: archived
 owner: tim
 purpose: >-
   Cross-device reference implementation for qualifying local AI workflow
@@ -14,7 +14,7 @@ language: TypeScript, Swift, Kotlin
 runtime: Node.js, iOS, Android
 agent_visible: true
 notes: >-
-  Standalone private repository. QVAC is the first adapter and ExecuTorch is
-  the required comparison. Public release and employer use require Tim's
-  explicit approval of the exact package.
-
+  Version one closed on 2026-07-30. The public repository preserves QVAC
+  physical-device evidence, the ExecuTorch capability boundary, the corrected
+  structured-output finding, and a CI-locked evidence pipeline. New experiments
+  require a concrete decision that the current evidence leaves open.

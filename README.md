@@ -2,7 +2,7 @@
 
 Can a privacy-sensitive incident workflow run on a phone with no cloud inference, and how should the app behave when the model or the device can't meet the requirement?
 
-This lab answers that with evidence from a real iPhone, not a benchmark. The empirical findings are that a runtime's structured-output guarantee turned out to be conditional rather than absolute, and that raw model output was byte-identical between a MacBook and an iPhone. The safety result is architectural rather than empirical: restricted data can't reach the cloud because the router never grants model output that authority, and tests hold the invariant in place.
+This lab answers that with evidence from a real iPhone. The empirical findings are that a runtime's structured-output guarantee turned out to be conditional rather than absolute, and that raw model output was byte-identical between a MacBook and an iPhone. The safety result is architectural rather than empirical: restricted data can't reach the cloud because the router never grants model output that authority, and tests hold the invariant in place.
 
 ## Results
 
@@ -82,7 +82,7 @@ These bound what the evidence above can be used to claim.
 
 - **Thermal and battery state were not varied.** Every device number came from a cool iPhone at 100% battery running a short sweep. Sustained load, thermal throttling, and low-power mode were not measured, and they're the conditions most likely to change the performance numbers.
 - **One model, one quantization, one device.** Results describe QVAC 0.15.0 with Llama 3.2 1B Q4_0 on an iPhone 15 Pro. They're not a runtime ranking and don't generalize to other models or hardware.
-- **Determinism was fixed, not sampled.** Temperature 0 and a fixed seed make runs comparable and mean the correctness numbers reflect one deterministic path, not a distribution.
+- **Determinism used one fixed path.** Temperature 0 and a fixed seed make runs comparable. The correctness numbers describe that path. A distribution would require sampled runs.
 - **Eighteen synthetic cases, no real user data.** The corpus is deliberately small and hand-built to cover straightforward, ambiguous, malformed, adversarial, and restricted inputs.
 - **One measurement is weaker than it looks.** The `requiredMissingInformation` check uses exact string equality while the prompt never specifies a vocabulary, so it measures phrase compliance rather than comprehension. Its failures are not a capability finding.
 - **Android is untested.** No Android device was available, so the constrained-device boundary is unverified.
@@ -90,7 +90,12 @@ These bound what the evidence above can be used to claim.
 
 ## Status
 
-The required adapters are complete: QVAC has desktop and physical-device evidence, ExecuTorch has a documented boundary. MLX Swift remains a gated third adapter and is added only if it would produce distinct evidence rather than another score.
+Version one closed on July 30, 2026. QVAC has desktop and physical-device
+evidence. ExecuTorch has a documented capability boundary. The evidence,
+correction, checks, and reproduction path are committed.
+
+New runtime, model, token-cap, or device experiments require a concrete
+decision that the current evidence leaves open.
 
 ## License
 

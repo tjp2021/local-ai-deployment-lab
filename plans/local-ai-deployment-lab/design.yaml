@@ -16,9 +16,11 @@
     "rationale": "The build integrates multiple third-party AI runtimes with physical iOS and Android devices, persists raw model output and performance evidence, and may support public reliability claims. It uses synthetic data, has no production deployment or autonomous external action, and grants no authority to model output."
   },
   "lifecycle": {
-    "state": "VALIDATED",
-    "scope_fingerprint": "60616ce53992d0f816d4a4668f40feba0351b3fee167050cebc01fa0dd040915",
-    "validated_at": "2026-07-28T17:20:08.165489+00:00"
+    "state": "CLOSED",
+    "scope_fingerprint": "4d7a336b604d98088586534a773a1e4fbc1af492651b0fa0586d14907397c15c",
+    "validated_at": "2026-07-30T17:18:27.063100+00:00",
+    "closed_at": "2026-07-30T17:18:27Z",
+    "outcome": "implemented_and_verified"
   },
   "scope": {
     "in": [
@@ -74,7 +76,7 @@
       "GitHub only after a separate publication decision; no issue, pull request, or repository is created by this plan."
     ],
     "authorities": [
-      "Model output is advisory and cannot authorize cloud routing, publication, external communication, or destructive action.",
+      "Model output is advisory and can't authorize cloud routing, publication, external communication, or destructive action.",
       "The version-one cloud client is an injected spy or local stub and performs no network request.",
       "Tim must approve the exact public repository, case study, video, upstream contribution, and employer use before any external action."
     ]
@@ -86,9 +88,9 @@
       "Implement the QVAC adapter against a current supported SDK and capture one physical-device baseline.",
       "Implement the ExecuTorch adapter through documented packages and capture a comparable physical-device baseline.",
       "Run the bounded cross-device matrix and preserve immutable raw evidence.",
-      "Perform adversarial claim review, scrub private artifacts, and prepare but do not publish the case study and demo."
+      "Perform adversarial claim review, scrub private artifacts, and prepare the case study and demo without publishing them."
     ],
-    "reversal": "The new lab is isolated in a standalone repository and does not modify the archived QVAC evidence. Every implementation stage is a small commit. Reverting or deleting the unpushed local repository restores the prior workspace state; device apps can be uninstalled without changing device data outside their sandbox.",
+    "reversal": "The new lab is isolated in a standalone repository and doesn't modify the archived QVAC evidence. Every implementation stage is a small commit. Reverting or deleting the unpushed local repository restores the prior workspace state; device apps can be uninstalled without changing device data outside their sandbox.",
     "commit_boundaries": [
       "Commit 1: validated design and reference-implementation source packet only.",
       "Commit 2: case/result contracts, deterministic routing boundary, synthetic fixtures, and unit tests.",
