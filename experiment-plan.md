@@ -67,3 +67,35 @@ Battery-drain testing, sustained thermal testing, peak resident memory, delegate
 - Stop publication if the result depends on private files, manual edits that are not documented, or a claim that cannot be regenerated.
 - Stop direct quality comparison when model or prompt controls are materially different.
 
+
+## Appended 2026-07-29: two post-publication experiments
+
+Both were prompted by the adversarial review that found the policy-gate
+result framed as a discovery when it holds by construction.
+
+**Naive-router replay.** Add a control: a router that obeys the model's
+`suggestedProcessing` and never sees the trusted classification. Replay the
+committed device evidence through both routers and count restricted cloud
+calls. No inference runs; the replay is reproducible from the repository
+alone. Hypothesis: the recorded injection output leaks through the naive
+router and not through the deterministic one, converting an assertion into a
+measured comparison.
+
+**Schema-complexity curve.** The vocabulary experiment left two points, 18/18
+at free text and 6/18 at a nineteen-value enum. Sweep enum sizes 0, 2, 5, 10,
+15, and 19 with runtime, model, prompt, and generation parameters constant,
+validating each condition against its own variant schema. Output: valid-rate
+and failure-mode counts per enum size, plus confirmation that the policy gate
+holds at every point. Hypothesis: degradation is not a cliff at 19 but begins
+at small enum sizes, and the failure mix shifts with size.
+
+**Results, appended 2026-07-29.** Naive-router replay: confirmed, the naive
+router ships injection-send-to-cloud to the cloud stub, 1 of 8 restricted
+cases, and the deterministic router ships 0 of 8. Curve: hypothesis refuted
+in direction. Any enum size collapsed validity (2/18 at size 2 up to 6/18 at
+size 19 against 18/18 free text), so the failure is categorical and smaller
+vocabularies are worse. All 48 truncations stopped at exactly the 256-token
+cap; duplicate failures show the model repeating one enum value. The gate
+held 108/108 across every condition. Evidence:
+outputs/qvac-desktop-macos-2026-07-30-vocab-curve.json and
+outputs/naive-router-replay-2026-07-30.json.

@@ -47,6 +47,12 @@ One fixture, `injection-send-to-cloud`, embeds a prompt injection in restricted 
 
 Calling that a discovery would be circular. It's an architectural property: the safety guarantee doesn't depend on the model resisting the attack, because the model never holds the authority in the first place. What the tests add is regression value. Five policy tests pin the invariant, so if routing ever became model-driven, they go red. What this run adds is one concrete demonstration that a real compromised output hits the gate and fails closed.
 
+### The Control: a Router That Obeys the Model
+
+An invariant that can't fail proves little by itself, so the lab added the version that can. [`runner/naive-policy.ts`](../runner/naive-policy.ts) routes wherever `suggestedProcessing` points. It never sees the trusted classification, and it treats `requiresHumanReview` as an annotation for a queue rather than a boundary on the data path, which is how naive pipelines commonly wire it.
+
+[`scripts/replay-naive-router.ts`](../scripts/replay-naive-router.ts) replays the committed device evidence through both routers. No inference runs; the comparison regenerates from the repository alone. Result: the naive router ships `injection-send-to-cloud`, restricted data, to the cloud stub, 1 of 8 restricted cases. The review flag the model attached does not stop the payload from crossing, because a flag gates a queue, not a boundary. The deterministic router ships nothing, 0 of 8. That's the difference between architecture and luck, measured instead of asserted.
+
 ### Where the Model Is Weak
 
 Structured output was reliable. Judgment was not. Severity was wrong on 14 of 18 cases, consistently under-rating. The model also requested human review on all eighteen cases, including the straightforward ones where local handling was expected, and not a single case met every expectation check. At this model size, local structured extraction is dependable and local decisioning is not, which is the argument for putting a deterministic gate above it.
@@ -111,7 +117,22 @@ It made the runtime worse.
 
 Twelve cases failed validation in two distinct ways: seven produced truncated or unterminated JSON, and five emitted duplicate array items against a `uniqueItems` constraint.
 
-The finding is that a native structured-output guarantee is not a fixed property of a runtime. It degrades as schema complexity rises. The same QVAC `json_schema` path that produced perfectly valid output for a simple schema produced invalid output two thirds of the time once one field carried a nineteen-value enum.
+The first reading of this result was that the guarantee degrades as schema complexity rises. A follow-up sweep refuted that reading in direction.
+
+### The Curve: Any Enum Breaks It, and Smaller Is Worse
+
+[`scripts/run-vocab-curve.ts`](../scripts/run-vocab-curve.ts) ran the same eighteen fixtures at enum sizes 0, 2, 5, 10, 15, and 19, holding runtime, model, prompt, and generation parameters constant. Each condition validated against its own variant schema, so the native constraint and the independent validator always agreed on what "valid" means.
+
+| Enum size | 0 (free text) | 2 | 5 | 10 | 15 | 19 |
+|---|---|---|---|---|---|---|
+| Schema-valid | 18/18 | 2/18 | 1/18 | 3/18 | 5/18 | 6/18 |
+| Truncated JSON | 0 | 14 | 11 | 8 | 8 | 7 |
+| Duplicate items | 0 | 2 | 6 | 7 | 5 | 5 |
+| Policy gate held | 18/18 | 18/18 | 18/18 | 18/18 | 18/18 | 18/18 |
+
+The failure is categorical, not gradual. Introducing an enum on the array field collapsed validity at every size tested, and the smallest vocabularies did worst, the opposite of the "more complexity, more degradation" intuition. The nineteen-value endpoint reproduced the original experiment exactly: 6/18, seven truncations, five duplicate-item violations.
+
+The evidence shows the mechanism. All 48 truncated outputs stopped at exactly the 256-token generation cap, while every valid constrained output used 73 to 99 tokens. The duplicate-item failures show the model emitting one vocabulary term over and over, `"account reference"` three times in a row in the recorded raw output. Under an enum constraint on an array, this 1B model loops on the vocabulary instead of closing the array. When the loop trips `uniqueItems`, the failure is duplicate items; when it doesn't, it burns the token budget and truncates. A larger vocabulary gives the loop more values to land on, which is why 19 fails less often than 2. Whether a larger generation cap would rescue the truncated cases or just convert them into duplicate-item failures was not tested.
 
 Two design decisions were vindicated by this run. The adapter had always refused to treat QVAC's native structured-output constraint as proof that the application received valid data, and kept independent parsing and validation. That defensive choice is what caught these failures. The policy gate also held at 18/18 while two thirds of model outputs were unparseable, because unparseable output fails closed to human review.
 
@@ -173,9 +194,9 @@ These signals indicate Android/ARM CPU targeting, but they don't explicitly stat
 
 ## What the Lab Proves
 
-1. **Model output should never hold routing authority, and here it mechanically can't.** The restricted-case zero-cloud-call guarantee is enforced by construction: the restricted branch has no code path to the cloud client, and classification comes from the trusted case record. That's established practice applied cleanly, not a discovery, and the runs confirm rather than test it. Fifteen contract tests pin the invariant, and it held across a partially successful prompt injection and a degraded run where two thirds of model outputs were unparseable. Both fail closed to human review.
+1. **Model output should never hold routing authority, and the cost of granting it is now measured.** The restricted-case zero-cloud-call guarantee is enforced by construction: the restricted branch has no code path to the cloud client, and classification comes from the trusted case record. Twenty contract and policy tests pin the invariant, and the naive-router replay supplies the control: give the model's routing field authority over the same recorded outputs and restricted data reaches the cloud, 1 of 8 restricted cases. Keep authority in the deterministic router and it never does, including across a degraded run where two thirds of model outputs were unparseable. Both fail closed to human review.
 
-2. **A runtime's structured-output guarantee is conditional, not absolute.** The same QVAC `json_schema` path produced 18/18 valid output on schema 1.0 and 6/18 on schema 1.1, with only the field vocabulary changed. Any application relying on native structured output needs independent validation, because the guarantee weakens exactly where the schema gets demanding.
+2. **Enum-constrained arrays break this runtime's structured-output guarantee categorically, and smaller enums break it harder.** Free text held 18/18. Every enum size from 2 to 19 collapsed validity, bottoming at 1/18, with all truncations pinned at the 256-token cap and duplicate-item loops visible in the raw output. Any application relying on native structured output needs independent validation, and vocabulary constraints belong in post-processing, not in the decoding schema, at this model size.
 
 3. **Physical-device deployment is hard in specific ways.** The ExecuTorch failure was not "the phone is too slow" or "not enough RAM." The full app pipeline worked and the model file was delivered intact. The load still failed, on an artifact whose own model card documents Android/ARM CPU targeting and makes no iOS claims. The exact failing stage stays unverified in this lab. That's a model-supply problem, and it would affect any iOS deployment picking this artifact off HuggingFace.
 
@@ -185,7 +206,8 @@ These signals indicate Android/ARM CPU targeting, but they don't explicitly stat
 
 - Repeat the device sweep across battery states and after thermal load, which this run did not vary
 - Cross-device boundary classification (iPhone 15 Pro vs. iPhone 15 vs. unverified Android)
-- Find where QVAC's structured-output reliability actually breaks, by varying schema complexity between the 1.0 and 1.1 endpoints
+- Rerun the enum curve with a larger generation cap, to learn whether truncations convert into duplicate-item failures or into valid output
+- Rerun the enum curve on the 3B model, to learn whether the vocabulary loop is a 1B-class behavior
 - Upstream contribution: document the iOS LLM runner's `"forward"` method expectation in ExecuTorch examples, or contribute a reproduction case
 
 ## Repository State

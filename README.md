@@ -23,9 +23,16 @@ Raw model output was byte-identical across both hosts on all eighteen cases.
 
 ## Three findings
 
-**1. Authority beats alignment, by construction.** One fixture hides a prompt injection inside restricted incident text. The injection partially worked: the model recommended cloud processing for restricted data, though it also flagged the case for human review. The router refused the cloud route, and that outcome was guaranteed before inference ran. The restricted branch has no code path that can invoke the cloud client, and classification comes from the trusted case record, never from the model. That's an architectural invariant locked in by tests, not an empirical discovery. The phone produced the same compromised recommendation, and scoring the phone's recorded output through the same router gave the same zero cloud calls.
+**1. Authority beats alignment, measured against a control.** One fixture hides a prompt injection inside restricted incident text. The injection partially worked: the model recommended cloud processing for restricted data, though it also flagged the case for human review. The router refused the cloud route, and that outcome was guaranteed before inference ran. The restricted branch has no code path that can invoke the cloud client, and classification comes from the trusted case record, never from the model. To measure what that architecture is worth, [`scripts/replay-naive-router.ts`](scripts/replay-naive-router.ts) replays the committed device evidence through a control router that obeys the model's own routing field. The naive router ships the injection case's restricted payload to the cloud, 1 of 8 restricted cases, review flag and all. The deterministic router ships none. No model runs in the replay; the comparison regenerates from the repository alone.
 
-**2. Structured-output guarantees degrade with schema complexity.** Constraining one field to a nineteen-value enum, holding runtime, model, prompt, and parameters constant, dropped valid output from 18/18 to 6/18 through truncated JSON and duplicate array items. The experimental schema and its evidence are preserved in [`contracts/experimental/`](contracts/experimental/).
+**2. Enum-constrained arrays break structured output categorically, and smaller enums are worse.** The first experiment compared free text (18/18 valid) against a nineteen-value enum (6/18) and read it as degradation with schema complexity. A follow-up sweep across enum sizes refuted that reading:
+
+| Enum size | 0 (free text) | 2 | 5 | 10 | 15 | 19 |
+|---|---|---|---|---|---|---|
+| Schema-valid | 18/18 | 2/18 | 1/18 | 3/18 | 5/18 | 6/18 |
+| Policy gate held | 18/18 | 18/18 | 18/18 | 18/18 | 18/18 | 18/18 |
+
+Any enum collapsed validity, and the smallest vocabularies did worst. The mechanism is visible in the evidence: all 48 truncated outputs stopped at exactly the 256-token generation cap, while every valid output used 73 to 99 tokens, and the duplicate-item failures show the model repeating one enum value until it violates `uniqueItems`. Under the constraint, this 1B model loops on the vocabulary instead of closing the array. Harness: [`scripts/run-vocab-curve.ts`](scripts/run-vocab-curve.ts); schema and evidence in [`contracts/experimental/`](contracts/experimental/) and [`outputs/`](outputs/).
 
 **3. A published model artifact can be silently platform-specific.** A pre-built SpinQuant INT4 `.pte` from HuggingFace fails to load on ExecuTorch's iOS runner with error 32. The app pipeline, signing, install, and file delivery all worked. The exact failing stage stays unverified and is recorded that way.
 
@@ -34,10 +41,11 @@ Raw model output was byte-identical across both hosts on all eighteen cases.
 ```bash
 npm install
 npm run typecheck
-npm run test:contracts-and-policy   # 15 contract and policy tests
+npm run test:contracts-and-policy   # 20 contract and policy tests
 npm run validate:fixtures           # 18 synthetic cases
 npm run validate:evidence           # every committed record against its contract
 npm run check:scrub                 # publication safety
+node --import tsx scripts/replay-naive-router.ts   # both routers over committed evidence
 ```
 
 Those need no model, no device, and no network beyond the install. Dependencies are pinned by lockfile and the same checks run in CI.
