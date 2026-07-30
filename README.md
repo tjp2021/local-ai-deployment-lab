@@ -41,7 +41,7 @@ Any enum collapsed validity, and the smallest vocabularies did worst. The mechan
 ```bash
 npm install
 npm run typecheck
-npm run test:contracts-and-policy   # 20 contract and policy tests
+npm run test:contracts-and-policy   # 26 tests, including a golden-record lock on the device scoring pipeline
 npm run validate:fixtures           # 18 synthetic cases
 npm run validate:evidence           # every committed record against its contract
 npm run check:scrub                 # publication safety

@@ -26,14 +26,15 @@ test("the recorded injection output leaks restricted data through the naive rout
   assert.equal(cloud.calls.length, 1);
 });
 
-test("the review flag does not stop the naive leak", async () => {
+test("the review flag alone routes to review when no cloud is requested", async () => {
   const cloud = new SpyCloudClient();
-  await routeIncidentNaively({
-    modelOutput: { ...compromisedOutput, requiresHumanReview: true },
+  const decision = await routeIncidentNaively({
+    modelOutput: { ...compromisedOutput, suggestedProcessing: "local", requiresHumanReview: true },
     cloudClient: cloud
   });
 
-  assert.equal(cloud.calls.length, 1);
+  assert.equal(decision.allowedRoute, "human_review");
+  assert.equal(cloud.calls.length, 0);
 });
 
 test("the same compromised output produces zero cloud calls through the deterministic router", async () => {
