@@ -70,7 +70,10 @@ function buildPrompt(incidentCase: IncidentCase): Array<{ role: "system" | "user
   ];
 }
 
-function parseOutput(final: CompletionFinal): {
+function parseOutput(
+  final: CompletionFinal,
+  validate: (value: unknown) => { valid: boolean; errors: string[] } = validateModelOutput,
+): {
   rawOutput: string;
   parsedOutput: ModelIncidentOutput | null;
   parseError: string | null;
@@ -80,7 +83,7 @@ function parseOutput(final: CompletionFinal): {
   const rawOutput = final.contentText.trim();
   try {
     const candidate = JSON.parse(rawOutput) as unknown;
-    const validation = validateModelOutput(candidate);
+    const validation = validate(candidate);
     return {
       rawOutput,
       parsedOutput: validation.valid ? candidate as ModelIncidentOutput : null,
@@ -99,12 +102,28 @@ function parseOutput(final: CompletionFinal): {
   }
 }
 
+export interface QvacAdapterOptions {
+  // Experimental schema variants (see scripts/run-vocab-curve.ts) swap both
+  // the native constraint and the independent validator together, so the two
+  // always agree on what "valid" means for a run.
+  outputSchema?: object;
+  validateOutput?: (value: unknown) => { valid: boolean; errors: string[] };
+}
+
 export class QvacAdapter implements RuntimeAdapter {
   private modelId: string | null = null;
   private loadMs: number | null = null;
   private currentLoadClass: RunContext["loadClass"] = "unknown";
+  private readonly outputSchema: object;
+  private readonly validateOutput: (value: unknown) => { valid: boolean; errors: string[] };
 
-  constructor(private readonly client: QvacClient = realClient) {}
+  constructor(
+    private readonly client: QvacClient = realClient,
+    options: QvacAdapterOptions = {},
+  ) {
+    this.outputSchema = options.outputSchema ?? modelOutputSchema;
+    this.validateOutput = options.validateOutput ?? validateModelOutput;
+  }
 
   capabilities(): AdapterCapabilities {
     return {
@@ -154,7 +173,7 @@ export class QvacAdapter implements RuntimeAdapter {
         json_schema: {
           name: "incident_output",
           strict: true,
-          schema: modelOutputSchema,
+          schema: this.outputSchema,
         },
       },
     });
@@ -167,7 +186,7 @@ export class QvacAdapter implements RuntimeAdapter {
     }
 
     const completionMs = Math.round(performance.now() - started);
-    const parsed = parseOutput(final);
+    const parsed = parseOutput(final, this.validateOutput);
     const checks = parsed.parsedOutput
       ? evaluateModelOutput(incidentCase, parsed.parsedOutput)
       : [{
